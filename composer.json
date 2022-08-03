@@ -7,8 +7,11 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-        	"drhino\\Container\\": "Container\\"
+            "drhino\\Container\\": "Container\\"
         }
+    },
+    "require": {
+        "psr/container": "^2.0"
     },
     "require-dev": {
         "vimeo/psalm": "^4.26",
