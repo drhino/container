@@ -24,6 +24,8 @@ $myObject = $container->get('StdClass');
 
 Read and delete:
 ```php
+use drhino\Container\Container;
+
 $container = new Container;
 
 $container->set('myArray', ['config' => 'secret']);
