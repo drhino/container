@@ -2,7 +2,7 @@
 
 Install with Composer:
 ```bash
-$ composer install drhino\container
+$ composer require drhino/container
 ```
 
 <br />
@@ -13,7 +13,7 @@ use drhino\Container\Container;
 
 $container = new Container;
 
-$container->set('StdClass', StdClass:class);
+$container->set('StdClass', StdClass::class);
 
 // Constructs the instance when requested
 // The same instance is returned once created
