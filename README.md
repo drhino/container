@@ -53,7 +53,7 @@ class MyClass extends ContainerInjector
 }
 
 $container = new Container;
-$container->set('StdClass', StdClass:class);
+$container->set('StdClass', StdClass::class);
 $container->set('MyClass', MyClass::class);
 
 $container->get('MyClass')->something();
