@@ -27,7 +27,7 @@ class Container implements ContainerInterface
      * Adds or Replaces the representation of a resource.
      *
      * @param string $id
-     * @param string|object|array $resource
+     * @param class-string|object|array $resource
      *
      * @throws ContainerException
      *
@@ -51,7 +51,7 @@ class Container implements ContainerInterface
      */
     public function readAndDelete(String $id)
     {
-        /** @var string|object|array */
+        /** @var class-string|object|array */
         $resource = $this->get($id);
 
         unset($this->containers[$id]);
@@ -84,7 +84,7 @@ class Container implements ContainerInterface
             throw new ContainerNotFoundException("Container Not Found: `$id`");
         }
 
-        /** @var string|object|array */
+        /** @var class-string|object|array */
         $resource = $this->containers[$id];
 
         if (is_string($resource)/* && class_exists($resource)*/) {
