@@ -1,0 +1,17 @@
+{
+    "name": "drhino/container",
+    "type": "library",
+    "description": "Lightweight PSR-11 Container with optional Service Locator",
+    "keywords": ["psr-11", "container", "service locator", "dependency manager", "dependency injection"],
+    "homepage": "https://github.com/drhino/container",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+        	"drhino\\Container\\": "Container\\"
+        }
+    },
+    "require-dev": {
+        "vimeo/psalm": "^4.26",
+        "phpunit/phpunit": "^9"
+    }
+}
