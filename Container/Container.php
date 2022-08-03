@@ -36,7 +36,7 @@ class Container implements ContainerInterface
     public function set(String $id, $resource): void
     {
         if (is_string($resource) && !class_exists($resource)) {
-            throw new ContainerException("Class Does Not Exist: `$id`");
+            throw new ContainerException("Class Does Not Exist: `$resource`");
         }
 
         $this->containers[$id] = $resource;
