@@ -147,4 +147,72 @@ final class ContainerTest extends TestCase
         $container->set('ThrowableObject', ThrowableObject::class);
         $container->get('ThrowableObject');
     }
+
+    public function testContainerSetImmutable(): void
+    {
+        $container = new Container;
+        $container->set('StdClass', StdClass::class, true);
+
+        $this->assertInstanceOf(
+            StdClass::class,
+            $container->get('StdClass')
+        );
+    }
+
+    public function testContainerSetImmutableException(): void
+    {
+        $this->expectException(ContainerException::class);
+
+        $container = new Container;
+        $container->set('StdClass', StdClass::class, true);
+        $container->set('StdClass', StdClass::class);
+    }
+
+    public function testContainerSetImmutableArray(): void
+    {
+        $container = new Container;
+        $container->env('myArray', ['test' => '123']);
+
+        $this->assertEquals(
+            ['test' => '123'],
+            $container->get('myArray')
+        );
+    }
+
+    public function testContainerSetImmutableArrayException(): void
+    {
+        $this->expectException(ContainerException::class);
+
+        $container = new Container;
+        $container->env('myArray', ['test' => '123']);
+        $container->env('myArray', ['test' => '123']);
+    }
+
+    public function testContainerSetImmutableArrayReadAndDelete(): void
+    {
+        $container = new Container;
+        $container->env('myArray', ['test' => '123']);
+
+        $this->assertEquals(
+            ['test' => '123'],
+            $container->readAndDelete('myArray')
+        );
+
+        $this->assertEquals(
+            false,
+            $container->has('myArray')
+        );
+    }
+
+    public function testContainerSetImmutableArrayReadAndDeleteException(): void
+    {
+        $container = new Container;
+        $container->env('myArray', ['test' => '123']);
+
+        $container->readAndDelete('myArray');
+
+        $this->expectException(ContainerNotFoundException::class);
+
+        $container->get('myArray');
+    }
 }

@@ -22,24 +22,52 @@ use Throwable;
 class Container implements ContainerInterface
 {
     private array $containers = [];
+    private array $immutable = [];
 
     /**
      * Adds or Replaces the representation of a resource.
      *
      * @param string $id
      * @param class-string|object|array $resource
+     * @param bool $immutable TRUE to throw Exception on replacement.
      *
      * @throws ContainerException
      *
      * @return void
      */
-    public function set(String $id, $resource): void
+    public function set(String $id, $resource, Bool $immutable = null): void
     {
+        if (in_array($id, $this->immutable)) {
+            throw new ContainerException("Immutable Entry: `$id`");
+        }
+
         if (is_string($resource) && !class_exists($resource)) {
             throw new ContainerException("Class Does Not Exist: `$resource`");
         }
 
         $this->containers[$id] = $resource;
+
+        if ($immutable) {
+            array_push($this->immutable, $id);
+        }
+    }
+
+    /**
+     * Sets an immutable array.
+     *
+     * The $resource can be unset in ->readAndDelete($id).
+     * However, the $id can only be assigned once.
+     *
+     * @param string $id
+     * @param array $resource
+     *
+     * @throws ContainerException when a value has previously been assigned.
+     *
+     * @return void
+     */
+    public function env(String $id, Array $resource): void
+    {
+        $this->set($id, $resource, true);
     }
 
     /**

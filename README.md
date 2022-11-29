@@ -2,7 +2,7 @@
 
 Install with Composer:
 ```bash
-$ composer require drhino/container
+composer require drhino/container
 ```
 
 <br />
@@ -22,13 +22,15 @@ $myObject = $container->get('StdClass');
 
 <br />
 
-Read and delete:
+Immutable:
 ```php
 use drhino\Container\Container;
 
 $container = new Container;
 
-$container->set('myArray', ['config' => 'secret']);
+$container->env('myArray', ['config' => 'secret']);
+// Equivalent to:
+// $container->set('myArray', ['config' => 'secret'], true);
 
 $myArray = $container->readAndDelete('myArray');
 
@@ -37,6 +39,11 @@ $container->has('myArray');
 
 // Throws drhino\Container\Exception\ContainerNotFoundException
 $container->get('myArray');
+
+// Throws drhino\Container\Exception\ContainerException
+$container->set('myArray', ['config' => 'secret']);
+// Or:
+// $container->env('myArray', ['config' => 'secret']);
 ```
 
 <br />
