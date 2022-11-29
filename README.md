@@ -24,13 +24,18 @@ $myObject = $container->get('StdClass');
 
 Immutable:
 ```php
-use drhino\Container\Container;
+$container->set('StdClass', StdClass::class, $immutable = true);
 
-$container = new Container;
+// Throws drhino\Container\Exception\ContainerException
+$container->set('StdClass', StdClass::class);
+```
 
+<br />
+
+Immutable + Truncate:
+```php
+// Equivalent to: $container->set('myArray', ['config' => 'secret'], true);
 $container->env('myArray', ['config' => 'secret']);
-// Equivalent to:
-// $container->set('myArray', ['config' => 'secret'], true);
 
 $myArray = $container->readAndDelete('myArray');
 
@@ -41,9 +46,7 @@ $container->has('myArray');
 $container->get('myArray');
 
 // Throws drhino\Container\Exception\ContainerException
-$container->set('myArray', ['config' => 'secret']);
-// Or:
-// $container->env('myArray', ['config' => 'secret']);
+$container->env('myArray', ['config' => 'secret']);
 ```
 
 <br />
