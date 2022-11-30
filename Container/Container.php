@@ -176,6 +176,7 @@ class Container implements ContainerInterface
                     $resource->container = $this;
                     $resource->enum = $this->enums[$id] ?? new ContainerEnum;
                     unset($this->enums[$id]);
+                    $resource();
                 }
 
                 $this->containers[$id] = $resource;

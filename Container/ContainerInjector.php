@@ -18,6 +18,8 @@ class ContainerInjector
     /** @var ContainerEnum|null */
     private $__enum = null;
 
+    public function __invoke() {}
+
     /**
      * Returns a class variable.
      *
