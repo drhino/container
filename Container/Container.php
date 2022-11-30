@@ -32,8 +32,9 @@ class Container implements ContainerInterface
     // Keeps the identifier even when unset in ->readAndDelete()
     private array $immutable = [];  // [ $id, ... ]
 
-    // Resources added in ->add()
-    // Keeps a reference to the ContainerEnum of that class-string|object
+    // Resources added by using the method `->add()`
+    // Holds a reference to the ContainerEnum of that class-string|object
+    //  until that class-string|object is requested in ->get()
     private array $enums = [];      // [ $id => ContainerEnum, ... ]
 
     /**
