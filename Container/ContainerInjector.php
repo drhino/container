@@ -2,6 +2,9 @@
 
 namespace drhino\Container;
 
+use drhino\Container\ContainerEnum;
+use drhino\Container\Exception\ContainerException;
+
 use Psr\Container\ContainerInterface;
 
 /**
@@ -9,10 +12,64 @@ use Psr\Container\ContainerInterface;
  */
 class ContainerInjector
 {
-    protected $container;
+    /** @var ContainerInterface|null */
+    private $__container = null;
 
-    public function __construct(ContainerInterface $container)
+    /** @var ContainerEnum|null */
+    private $__enum = null;
+
+    /**
+     * Returns a class variable.
+     *
+     * @param string $private variable without leading underscores.
+     *
+     * @throws ContainerException
+     *
+     * @return ContainerEnum|ContainerInterface|null
+     */
+    public function __get(String $private)
     {
-        $this->container = $container;
+        if ($private === 'enum')
+            /** @var ContainerEnum */
+            return $this->__enum;
+
+        if ($private === 'container')
+            /** @var ContainerInterface */
+            return $this->__container;
+
+        throw new ContainerException("Unknown Property: `$private`");
+    }
+
+    /**
+     * Rejects replacing the class variables.
+     *
+     * @param string $private variable without leading underscores.
+     * @param mixed|ContainerEnum|ContainerInterface $value
+     *
+     * @throws ContainerException Unknown Property
+     * @throws ContainerException Immutable Property
+     */
+    public function __set(String $private, $value): void
+    {
+        // Throws "Unknown Property" when "$private"
+        //  does not equal either: "enum" or "container".
+        if ($this->__get($private))
+            // Throws "Immutable Property" when
+            //  a value has previously been assigned.
+            throw new ContainerException("Immutable Property: `$private`");
+
+        if ($private === 'container' && ! $value instanceOf ContainerInterface)
+            throw new ContainerException(
+                "Invalid Argument: `$private`, expects: `ContainerInterface`");
+        else
+        if ($private === 'enum' && ! $value instanceOf ContainerEnum)
+            throw new ContainerException(
+                "Invalid Argument: `$private`, expects: `ContainerEnum`");
+
+        // Prefixes the named private variable with the leading underscores.
+        $private = "__$private";
+
+        // Assigns the immutable $value to the private property.
+        $this->$private = $value;
     }
 }
