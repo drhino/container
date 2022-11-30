@@ -10,7 +10,7 @@
 
 Install with Composer:
 ```bash
-composer require drhino/container@2
+composer require drhino/container:2
 ```
 
 <br />
