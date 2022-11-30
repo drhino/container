@@ -1,147 +1,82 @@
 # PSR-11: Container
 
+[v1.0.1](https://github.com/drhino/container/tree/v1.0.1)
+|
+[v1.1.0](https://github.com/drhino/container/tree/v1.1.0)
+|
+[v2.0.0](https://github.com/drhino/container/tree/v2.0.0)
+
 <br />
 
 Install with Composer:
 ```bash
-composer require drhino/container
+composer require drhino/container@2
 ```
 
 <br />
 
-```php
-/**
- * Adds or Replaces the representation of a resource.
- * Optionally, set the resource as immutable.
- *
- * @throws ContainerException when replacing an immutable $resource.
- * @throws ContainerException when a class-string does not exist.
- */
-$container->set($id, $resource, $immutable);
-
-/** 
- * Returns the $resource.
- *
- * @throws ContainerNotFoundException when the identifier does not exist.
- * @throws ContainerException when constructing a class-string failed.
- */
-$container->get($id);
-
-/**
- * Returns a boolean whether the identifier exists.
- */
-$container->has($id);
-
-/** 
- * Same as ->get() + destructs the $resource.
- */
-$container->readAndDelete($id);
-```
-
-<br />
-
-## Basic example:
+## Example use:
 
 ```php
 use drhino\Container\Container;
 
 $container = new Container;
 
-$container->set('database adapter', Your\Namespace\Database::class);
+$container
+  ->add(
+    RouterInterface::class,
+    Router::class
+  )
+;
 
-// Constructs the instance when requested
-// The same instance is returned once created
-$db = $container->get('database adapter');
+// Use an interface as a named adapter for your dependencies.
+// This allows you to swap `Database::class` without having to update your code.
+// Additionally, class constants can be dynamically defined by using enum.
+
+$container
+  ->add(
+    DatabaseInterface::class,
+    Database::class
+  )
+    ->enum('constant', 'immutable')
+    ->enum('dsn', 'mysql:host=localhost')
+;
+
+// Constructs the class-string.
+$container->get(RouterInterface::class);
 ```
 
 <br />
 
-Or keep the existing namespace as the identifier:
+> Review all available methods in: [Container](https://github.com/drhino/container/blob/main/Container/Container.php)
 
-```php
-$container->set(StdClass::class, StdClass::class);
-
-$std = $container->get(StdClass::class);
-```
+> Considering the example above, the following would be your injected dependencies:
 
 <br />
 
-Or construct the object before adding it to the container:
-
 ```php
-$std = new StdClass($param);
-
-$container->set(StdClass::class, $std);
-
-$std = $container->get(StdClass::class);
-```
-
-<br />
-
-Or add some data to the container:
-
-```php
-$container->set('config', ['my' => 'secret']);
-
-$config = $container->get('config');
-```
-
-<br />
-
-## Immutable:
-
-> A $resource can be set to immutable. \
-> Once a $resource has been assigned to the given identifier, that $resource cannot be replaced. \
-> However, the $resource can still be unset by calling `->readAndDelete()` (see next example).
-
-```php
-$container->set('StdClass', StdClass::class, $immutable = true);
-
-// Throws drhino\Container\Exception\ContainerException
-$container->set('StdClass', StdClass::class);
-```
-
-<br />
-
-## Immutable + Truncate:
-
-> `->env()` is an alias of `->set()` with the third parameter ($immutable) set to true. \
-> `->env()` only accepts an array as the value (second parameter).
-
-```php
-$container->env('config', ['my' => 'secret']);
-
-$myArray = $container->readAndDelete('myArray');
-
-// Returns false
-$container->has('config');
-
-// Throws drhino\Container\Exception\ContainerNotFoundException
-$container->get('config');
-
-// Throws drhino\Container\Exception\ContainerException
-$container->env('config', ['my' => 'secret']);
-```
-
-<br />
-
-## Service locator:
-
-```php
-use drhino\Container\Container;
 use drhino\Container\ContainerInjector;
 
-class MyClass extends ContainerInjector
+interface RouterInterface {}
+interface DatabaseInterface {}
+
+class Database extends ContainerInjector implements DatabaseInterface
 {
-    public function something(): void
-    {
-        $std = $this->container->get('StdClass');
+    public function connect() {
+        echo 'connecting to: ' . $this->enum->dsn . PHP_EOL;
     }
 }
 
-$container = new Container;
-$container->set('StdClass', StdClass::class);
-$container->set('MyClass', MyClass::class);
-
-$container->get('MyClass')->something();
+class Router extends ContainerInjector implements RouterInterface
+{
+    // Optional, executes after __construct() -- which does not have access to
+    //  $this->container and $this->enum
+    public function __invoke()
+    {
+        $db = $this->container->get(DatabaseInterface::class);
+        $db->connect();
+    }
+}
 ```
+
+<br />
