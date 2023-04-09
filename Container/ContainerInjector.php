@@ -5,6 +5,8 @@ namespace drhino\Container;
 use drhino\Container\ContainerEnum;
 use drhino\Container\Exception\ContainerException;
 
+use InvalidArgumentException;
+
 use Psr\Container\ContainerInterface;
 
 /**
@@ -50,6 +52,7 @@ class ContainerInjector
      *
      * @throws ContainerException Unknown Property
      * @throws ContainerException Immutable Property
+     * @throws InvalidArgumentException
      */
     public function __set(String $private, $value): void
     {
@@ -61,12 +64,10 @@ class ContainerInjector
             throw new ContainerException("Immutable Property: `$private`");
 
         if ($private === 'container' && ! $value instanceOf ContainerInterface)
-            throw new ContainerException(
-                "Invalid Argument: `$private`, expects: `ContainerInterface`");
+            throw new InvalidArgumentException("`$private` expects `ContainerInterface`");
         else
         if ($private === 'enum' && ! $value instanceOf ContainerEnum)
-            throw new ContainerException(
-                "Invalid Argument: `$private`, expects: `ContainerEnum`");
+            throw new InvalidArgumentException("`$private` expects `ContainerEnum`");
 
         // Prefixes the named private variable with the leading underscores.
         $private = "__$private";
