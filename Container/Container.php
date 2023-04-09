@@ -78,22 +78,30 @@ class Container implements ContainerInterface
      *
      * @param string $id
      * @param class-string|object|array $resource, uses $id if undefined.
+     * @param array $arguments, uses $resource if undefined and (array)$resource
      *
-     * @throws ContainerException when the resource is an array.
      * @throws ContainerException when a value has previously been assigned.
-     * @throws ContainerException when the class is invalid.
+     * @throws ContainerException when the resource is invalid.
      *
      * @return ContainerEnum
      */
-    public function add(String $id, $resource = null): ContainerEnum
+    public function add(String $id, $resource = null, Array $arguments = null): ContainerEnum
     {
+        /*
         if (is_array($resource))
             throw new ContainerException(
                 'Use ->env($id, $resource) to set an immutable array');
+        */
+
+        if (!isset($arguments) && is_array($resource)) {
+            $arguments = $resource;
+            $resource = null;
+        }
 
         /** @var class-string|object */
         $resource = $resource ?? $id;
 
+        /*
         if (get_parent_class($resource) !== ContainerInjector::class) {
 
             $resource = is_string($resource) ? $resource : get_class($resource);
@@ -101,10 +109,11 @@ class Container implements ContainerInterface
             throw new ContainerException(
                 "Must Extend From ContainerInjector: `$resource`");
         }
+        */
 
         $this->set($id, $resource, true);
 
-        $this->enums[$id] = new ContainerEnum;
+        $this->enums[$id] = new ContainerEnum($arguments);
 
         return $this->enums[$id];
     }
@@ -145,6 +154,24 @@ class Container implements ContainerInterface
     }
 
     /**
+     * Returns the constructed object of a class-string with the arguments.
+     *
+     * @param class-string $resource
+     * @param array $arguments
+     *
+     * @return object
+     */
+    private function constructResource(String $resource, Array $arguments): object
+    {
+        // Compatibility
+        if (get_parent_class($resource) === ContainerInjector::class) {
+            $arguments = [];
+        }
+
+        return new $resource(...$arguments);
+    }
+
+    /**
      * Finds an entry of the container by its identifier and returns it.
      *
      * A (class-)String is constructed as an Object when first requested.
@@ -177,8 +204,15 @@ class Container implements ContainerInterface
         //  the class-string and replace it with that object
         if (is_string($resource)/* && class_exists($resource)*/) {
             try {
-                // __construct()
-                $resource = new $resource;
+                if (isset($this->enums[$id])) {
+                    /** @var ContainerEnum */
+                    $enum = $this->enums[$id];
+                    $enum = $enum->toArray();
+                } else {
+                    $enum = [];
+                }
+
+                $resource = $this->constructResource($resource, $enum);
 
                 // When the class extends from ContainerInjector
                 if (get_parent_class($resource) === ContainerInjector::class) {
@@ -192,10 +226,9 @@ class Container implements ContainerInterface
 
                     // Replaces the behaviour of the constructor since the
                     // constructor does not yet have access to enum or container
-                    // if (method_exists($resource, '__invoke')) {
+                    if (method_exists($resource, '__invoke')) {
                         $resource();
-                    // }
-                    // => Method exists since it's defined in ContainerInjector
+                    }
                 }
 
                 // Replaces the class-string with the newly created object

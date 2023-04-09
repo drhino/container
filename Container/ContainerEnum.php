@@ -14,6 +14,18 @@ class ContainerEnum
     private array $_enum = []; // [ $key => $value, ... ]
 
     /**
+     * Assigns the initial values.
+     *
+     * @param array $enum
+     */
+    public function __construct(Array $enum = null)
+    {
+        if (isset($enum)) {
+            $this->_enum = $enum;
+        }
+    }
+
+    /**
      * Returns the $value of a given $key.
      *
      * @param string $key
@@ -61,5 +73,14 @@ class ContainerEnum
     public function enum(String $key, $value): ContainerEnum
     {
         return $this->__set($key, $value);
+    }
+
+    /**
+     * Returns $this->_enum
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return $this->_enum;
     }
 }
