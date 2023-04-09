@@ -20,6 +20,9 @@ use Throwable;
  *
  * A constructed Object always returns that same Object unless (re)set/removed.
  * An immutable resource can be destructed but only assigned once.
+ *
+ * @see https://www.php-fig.org/psr/psr-11/
+ * @see https://www.php-fig.org/psr/psr-11/meta/
  */
 class Container implements ContainerInterface
 {
@@ -147,7 +150,8 @@ class Container implements ContainerInterface
      * A (class-)String is constructed as an Object when first requested.
      * A different datatype is returned as-is.
      *
-     * A class extending from ContainerInjector, inherits $this and new ContainerEnum.
+     * A class extending from ContainerInjector inherits $this & ContainerEnum.
+     * Additionally, __invoke() is called after constructing such class-string.
      *
      * Regenerate an object by reassigning the resource in ->set($id, $resource)
      * On a $container->get($id) the class-string is again constructed.
@@ -169,17 +173,32 @@ class Container implements ContainerInterface
         /** @var class-string|object|array */
         $resource = $this->containers[$id];
 
+        // When the $resource is a class-string, construct
+        //  the class-string and replace it with that object
         if (is_string($resource)/* && class_exists($resource)*/) {
             try {
+                // __construct()
                 $resource = new $resource;
 
+                // When the class extends from ContainerInjector
                 if (get_parent_class($resource) === ContainerInjector::class) {
+                    // Assign the container to that class
                     $resource->container = $this;
+
+                    // Assign or create the enum for that class
                     $resource->enum = $this->enums[$id] ?? new ContainerEnum;
+                    // We don't need the cached version of the enum anymore
                     unset($this->enums[$id]);
-                    $resource();
+
+                    // Replaces the behaviour of the constructor since the
+                    // constructor does not yet have access to enum or container
+                    // if (method_exists($resource, '__invoke')) {
+                        $resource();
+                    // }
+                    // => Method exists since it's defined in ContainerInjector
                 }
 
+                // Replaces the class-string with the newly created object
                 $this->containers[$id] = $resource;
             }
             catch (Throwable $e) {
