@@ -40,7 +40,7 @@ class ContainerEnum
      *
      * @return ContainerEnum **this**
      */
-    public function __set(String $key, $value): ContainerEnum
+    public function __set(String $key, $value)//: ContainerEnum
     {
         try {
             $this->__get($key);
