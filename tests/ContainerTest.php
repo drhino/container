@@ -51,7 +51,8 @@ final class ObjectWithArguments
  */
 final class ContainerTest extends TestCase
 {
-    // psalm.dev/074
+    // psalm.dev/074 | php7.4
+    // comment out for php8.1
     protected $backupStaticAttributes = false;
     protected $runTestInSeparateProcess = false;
 
