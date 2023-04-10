@@ -6,14 +6,18 @@ use drhino\Container\Container;
 use drhino\Container\Exception\ContainerException;
 use drhino\Container\Exception\ContainerNotFoundException;
 
-// Used to test that we receive a ContainerException
-// rather than the Exception thrown from this class
-// The Exception is passed to the ContainerException
+/**
+ * Used to test that we receive a ContainerException
+ * rather than the Exception thrown from this class
+ * The Exception is passed to the ContainerException
+ * @psalm-api
+ */
 final class ThrowableObject
 {
     /**
      * Throws an Exception when the Object is constructed
      * @throws Exception
+     * @psalm-api
      */
     public function __construct()
     {
@@ -21,41 +25,38 @@ final class ThrowableObject
     }
 }
 
-// Used to test that we can construct a class with an argument
+/**
+ * Used to test that we can construct a class with an argument
+ * @psalm-api
+ */
 final class ObjectWithArguments
 {
-    private $argument;
-
     /**
      * Sets the argument in this class
      * @param boolean $argument true
      * @throws Exception when the $argument is false
+     * @psalm-api
      */
     public function __construct(bool $argument)
     {
         if (true !== $argument) {
             throw new Exception('Expects $argument=true in test case');
         }
-
-        $this->argument = $argument;
-    }
-
-    /**
-     * Returns the argument of the class
-     * @return boolean true
-     */
-    public function getArgument(): bool
-    {
-        return $this->argument;
     }
 }
 
 /**
  * Test case
+ * @psalm-api
  */
 final class ContainerTest extends TestCase
 {
+    // psalm.dev/074
+    protected $backupStaticAttributes = false;
+    protected $runTestInSeparateProcess = false;
+
     // Ensures the container can be created
+    // @psalm-api
     public function testCanBeCreated(): void
     {
         $this->assertInstanceOf(
@@ -65,78 +66,83 @@ final class ContainerTest extends TestCase
     }
 
     // Returns the container upon successful registration
+    // @psalm-api
     public function testContainerAdd(): void
     {
         $container = new Container;
 
         $this->assertInstanceOf(
             Container::class,
-            $container->add(StdClass::class)
+            $container->add(stdClass::class)
         );
     }
 
     // Returns true without any exception
+    // @psalm-api
     public function testContainerHas(): void
     {
         $container = new Container;
-        $container->add(StdClass::class);
+        $container->add(stdClass::class);
 
         $this->assertEquals(
             true,
-            $container->has(StdClass::class)
+            $container->has(stdClass::class)
         );
     }
 
     // Returns false without any exception
+    // @psalm-api
     public function testContainerHasNot(): void
     {
         $container = new Container;
 
         $this->assertEquals(
             false,
-            $container->has(StdClass::class)
+            $container->has(stdClass::class)
         );
     }
 
     // Adds a constructed object to the container
+    // @psalm-api
     public function testContainerGetObject(): void
     {
         $container = new Container;
-        $container->add(StdClass::class, new StdClass);
+        $container->add(stdClass::class, new stdClass);
 
         $this->assertInstanceOf(
-            StdClass::class,
-            $container->get(StdClass::class)
+            stdClass::class,
+            $container->get(stdClass::class)
         );
     }
 
     // Constructs the class-string when it is requested
+    // @psalm-api
     public function testContainerCreateObject(): void
     {
         $container = new Container;
-        $container->add(StdClass::class);
+        $container->add(stdClass::class);
 
         $this->assertInstanceOf(
-            StdClass::class,
-            $container->get(StdClass::class)
+            stdClass::class,
+            $container->get(stdClass::class)
         );
     }
 
     // Constructs the class-string with arguments when it is requested
+    // @psalm-api
     public function testContainerCreateObjectWithArguments(): void
     {
         $container = new Container;
         $container->add(ObjectWithArguments::class, [ 'argument' => true ]);
 
-        $constructed = $container->get(ObjectWithArguments::class);
-
-        $this->assertEquals(
-            true,
-            $constructed->getArgument()
+        $this->assertInstanceOf(
+            ObjectWithArguments::class,
+            $container->get(ObjectWithArguments::class)
         );
     }
 
     // Fails because of a missing argument
+    // @psalm-api
     public function testContainerCreateObjectWithArgumentsException(): void
     {
         $container = new Container;
@@ -147,16 +153,18 @@ final class ContainerTest extends TestCase
     }
 
     // Fails because the $id has previously been assigned
+    // @psalm-api
     public function testContainerAddImmutableException(): void
     {
         $container = new Container;
-        $container->add(StdClass::class);
+        $container->add(stdClass::class);
 
         $this->expectException(ContainerException::class);
-        $container->add(StdClass::class, new StdClass);
+        $container->add(stdClass::class, new stdClass);
     }
 
     // Throws a ContainerException with the previous Exception
+    // @psalm-api
     public function testContainerException(): void
     {
         $container = new Container;
@@ -167,11 +175,12 @@ final class ContainerTest extends TestCase
     }
 
     // Fails because the $id has not been assigned
+    // @psalm-api
     public function testContainerNotFoundException(): void
     {
         $container = new Container;
 
         $this->expectException(ContainerNotFoundException::class);
-        $container->get(StdClass::class);
+        $container->get(stdClass::class);
     }
 }
