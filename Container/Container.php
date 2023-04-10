@@ -35,7 +35,7 @@ class Container implements ContainerInterface
     /**
      * Adds a resource to the container.
      *
-     * @param class-string $id
+     * @param class-string|string $id
      * @param class-string|object|array $resource or $arguments
      * @param array $arguments
      *
@@ -76,10 +76,22 @@ class Container implements ContainerInterface
     }
 
     /**
+     * Returns a ContainerReference holding the identifier.
+     *
+     * @param class-string|string $id
+     *
+     * @return ContainerReference
+     */
+    public function ref(String $id): ContainerReference
+    {
+        return new ContainerReference($id);
+    }
+
+    /**
      * Returns the entry for a given identifier.
      * Constructs the resource when it has not been previously constructed.
      *
-     * @param string $id Identifier of the entry to look for.
+     * @param class-string|string $id Identifier of the entry to look for.
      *
      * @throws ContainerNotFoundException No entry was found for $id.
      * @throws ContainerException         Error retrieving the entry.
@@ -97,8 +109,20 @@ class Container implements ContainerInterface
         $resource = $this->containers[$id];
 
         if (is_array($resource)) {
-            /** @var array|null */
-            $arguments = $resource[1];
+            $arguments = false;
+
+            if (isset($resource[1])) {
+                /** @var array */
+                $arguments = $resource[1];
+                $arguments = array_values($arguments);
+
+                /** @var mixed $value */
+                foreach ($arguments as $index => $value) {
+                    if ($value instanceOf ContainerReference) {
+                        $arguments[$index] = $this->get($value->getIdentifier());
+                    }
+                }
+            }
 
             /** @var class-string */
             $resource = $resource[0];
@@ -106,7 +130,7 @@ class Container implements ContainerInterface
             try {
                 $resource = new ReflectionClass($resource);
                 $resource = $arguments
-                    ? $resource->newInstanceArgs(array_values($arguments))
+                    ? $resource->newInstanceArgs($arguments)
                     : $resource->newInstance();
 
                 $this->containers[$id] = $resource;
