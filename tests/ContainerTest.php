@@ -6,19 +6,56 @@ use drhino\Container\Container;
 use drhino\Container\Exception\ContainerException;
 use drhino\Container\Exception\ContainerNotFoundException;
 
-#use StdClass;
-#use Exception;
-
+// Used to test that we receive a ContainerException
+// rather than the Exception thrown from this class
+// The Exception is passed to the ContainerException
 final class ThrowableObject
 {
+    /**
+     * Throws an Exception when the Object is constructed
+     * @throws Exception
+     */
     public function __construct()
     {
         throw new Exception;
     }
 }
 
+// Used to test that we can construct a class with an argument
+final class ObjectWithArguments
+{
+    private $argument;
+
+    /**
+     * Sets the argument in this class
+     * @param boolean $argument true
+     * @throws Exception when the $argument is false
+     */
+    public function __construct(bool $argument)
+    {
+        if (true !== $argument) {
+            throw new Exception('Expects $argument=true in test case');
+        }
+
+        $this->argument = $argument;
+    }
+
+    /**
+     * Returns the argument of the class
+     * @return boolean true
+     */
+    public function getArgument(): bool
+    {
+        return $this->argument;
+    }
+}
+
+/**
+ * Test case
+ */
 final class ContainerTest extends TestCase
 {
+    // Ensures the container can be created
     public function testCanBeCreated(): void
     {
         $this->assertInstanceOf(
@@ -27,192 +64,114 @@ final class ContainerTest extends TestCase
         );
     }
 
-    public function testContainerSet(): void
+    // Returns the container upon successful registration
+    public function testContainerAdd(): void
     {
         $container = new Container;
 
-        $this->assertEquals(
-            null,
-            $container->set('StdClass', StdClass::class)
+        $this->assertInstanceOf(
+            Container::class,
+            $container->add(StdClass::class)
         );
     }
 
+    // Returns true without any exception
     public function testContainerHas(): void
     {
         $container = new Container;
-        $container->set('StdClass', StdClass::class);
+        $container->add(StdClass::class);
 
         $this->assertEquals(
             true,
-            $container->has('StdClass')
+            $container->has(StdClass::class)
         );
     }
 
+    // Returns false without any exception
     public function testContainerHasNot(): void
     {
         $container = new Container;
 
         $this->assertEquals(
             false,
-            $container->has('StdClass')
+            $container->has(StdClass::class)
         );
     }
 
-    // Adds a constructed object to the container.
+    // Adds a constructed object to the container
     public function testContainerGetObject(): void
     {
         $container = new Container;
-        $container->set('StdClass', new StdClass);
+        $container->add(StdClass::class, new StdClass);
 
         $this->assertInstanceOf(
             StdClass::class,
-            $container->get('StdClass')
+            $container->get(StdClass::class)
         );
     }
 
-    // Adds a reference to the class and constructs on first ->get()
+    // Constructs the class-string when it is requested
     public function testContainerCreateObject(): void
     {
         $container = new Container;
-        $container->set('StdClass', StdClass::class);
+        $container->add(StdClass::class);
 
         $this->assertInstanceOf(
             StdClass::class,
-            $container->get('StdClass')
+            $container->get(StdClass::class)
         );
     }
 
-    // Adds a string, which does not resolve to a classname.
-    public function testContainerString(): void
+    // Constructs the class-string with arguments when it is requested
+    public function testContainerCreateObjectWithArguments(): void
     {
+        $container = new Container;
+        $container->add(ObjectWithArguments::class, [ 'argument' => true ]);
+
+        $constructed = $container->get(ObjectWithArguments::class);
+
+        $this->assertEquals(
+            true,
+            $constructed->getArgument()
+        );
+    }
+
+    // Fails because of a missing argument
+    public function testContainerCreateObjectWithArgumentsException(): void
+    {
+        $container = new Container;
+        $container->add(ObjectWithArguments::class);
+
         $this->expectException(ContainerException::class);
-
-        $container = new Container;
-        $container->set('mystring', 'mystring');
+        $container->get(ObjectWithArguments::class);
     }
 
-    // Adds an array, which returns the exact same array.
-    public function testContainerArray(): void
+    // Fails because the $id has previously been assigned
+    public function testContainerAddImmutableException(): void
     {
         $container = new Container;
-        $container->set('myArray', ['test' => '123']);
+        $container->add(StdClass::class);
 
-        $this->assertEquals(
-            ['test' => '123'],
-            $container->get('myArray')
-        );
+        $this->expectException(ContainerException::class);
+        $container->add(StdClass::class, new StdClass);
     }
 
-    public function testReadAndDelete(): void
-    {
-        $container = new Container;
-        $container->set('myArray', ['test' => '123']);
-
-        $this->assertEquals(
-            ['test' => '123'],
-            $container->readAndDelete('myArray')
-        );
-
-        $this->assertEquals(
-            false,
-            $container->has('myArray')
-        );
-    }
-
-    public function testReadAndDeleteException(): void
-    {
-        $container = new Container;
-        $container->set('myArray', ['test' => '123']);
-
-        $container->readAndDelete('myArray');
-
-        $this->expectException(ContainerNotFoundException::class);
-
-        $container->get('myArray');
-    }
-
-    public function testContainerNotFoundException(): void
-    {
-        $this->expectException(ContainerNotFoundException::class);
-
-        $container = new Container;
-        $container->get('StdClass');
-    }
-
+    // Throws a ContainerException with the previous Exception
     public function testContainerException(): void
     {
+        $container = new Container;
+        $container->add(ThrowableObject::class);
+
         $this->expectException(ContainerException::class);
-
-        $container = new Container;
-        $container->set('ThrowableObject', ThrowableObject::class);
-        $container->get('ThrowableObject');
+        $container->get(ThrowableObject::class);
     }
 
-    public function testContainerSetImmutable(): void
+    // Fails because the $id has not been assigned
+    public function testContainerNotFoundException(): void
     {
         $container = new Container;
-        $container->set('StdClass', StdClass::class, true);
-
-        $this->assertInstanceOf(
-            StdClass::class,
-            $container->get('StdClass')
-        );
-    }
-
-    public function testContainerSetImmutableException(): void
-    {
-        $this->expectException(ContainerException::class);
-
-        $container = new Container;
-        $container->set('StdClass', StdClass::class, true);
-        $container->set('StdClass', StdClass::class);
-    }
-
-    public function testContainerSetImmutableArray(): void
-    {
-        $container = new Container;
-        $container->env('myArray', ['test' => '123']);
-
-        $this->assertEquals(
-            ['test' => '123'],
-            $container->get('myArray')
-        );
-    }
-
-    public function testContainerSetImmutableArrayException(): void
-    {
-        $this->expectException(ContainerException::class);
-
-        $container = new Container;
-        $container->env('myArray', ['test' => '123']);
-        $container->env('myArray', ['test' => '123']);
-    }
-
-    public function testContainerSetImmutableArrayReadAndDelete(): void
-    {
-        $container = new Container;
-        $container->env('myArray', ['test' => '123']);
-
-        $this->assertEquals(
-            ['test' => '123'],
-            $container->readAndDelete('myArray')
-        );
-
-        $this->assertEquals(
-            false,
-            $container->has('myArray')
-        );
-    }
-
-    public function testContainerSetImmutableArrayReadAndDeleteException(): void
-    {
-        $container = new Container;
-        $container->env('myArray', ['test' => '123']);
-
-        $container->readAndDelete('myArray');
 
         $this->expectException(ContainerNotFoundException::class);
-
-        $container->get('myArray');
+        $container->get(StdClass::class);
     }
 }
