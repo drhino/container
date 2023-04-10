@@ -1,16 +1,10 @@
 # PSR-11: Container
 
-[v1.0.1](https://github.com/drhino/container/tree/v1.0.1)
-|
-[v1.1.0](https://github.com/drhino/container/tree/v1.1.0)
-|
-[v2.0.0](https://github.com/drhino/container/tree/v2.0.0)
-
 <br />
 
 Install with Composer:
 ```bash
-composer require drhino/container:^2.0.0
+composer require drhino/container:^3.0.0
 ```
 
 <br />
@@ -18,65 +12,61 @@ composer require drhino/container:^2.0.0
 ## Example use:
 
 ```php
-use drhino\Container\Container;
+class Dependency
+{
+    public string $var = '';
+}
 
-$container = new Container;
+class Init
+{
+    public function __construct(Dependency $dependency, String $value)
+    {
+        $dependency->var = $value;
+    }
+}
+```
+
+```php
+$container = new drhino\Container\Container;
 
 $container
-  ->add(
-    RouterInterface::class,
-    Router::class
-  )
+    ->add(Init::class, [
+        // The arguments of the constructor
+        'dependency' => $container->ref(Dependency::class),
+        'value'      => 'Hello world',
+    ])
+    ->add(Dependency::class)
 ;
-
-// Use an interface as a named adapter for your dependencies.
-// This allows you to swap `Database::class` without having to update your code.
-// Additionally, class constants can be dynamically defined by using enum.
-
-$container
-  ->add(
-    DatabaseInterface::class,
-    Database::class
-  )
-    ->enum('constant', 'immutable')
-    ->enum('dsn', 'mysql:host=localhost')
-;
-
-// Constructs the class-string.
-$container->get(RouterInterface::class);
 ```
 
 <br />
 
-> Review all available methods in: [Container](https://github.com/drhino/container/blob/main/Container/Container.php)
-
-> Considering the example above, the following would be your injected dependencies:
+> Use $container->ref() to reference an identifier before it has been added into the container.
 
 <br />
 
 ```php
-use drhino\Container\ContainerInjector;
+// Executes __construct()
+$init = $container->get(Init::class);
 
-interface RouterInterface {}
-interface DatabaseInterface {}
+// Prints 'Hello world'
+echo $container->get(Dependency::class)->var;
+```
 
-class Database extends ContainerInjector implements DatabaseInterface
-{
-    public function connect() {
-        echo 'connecting to: ' . $this->enum->dsn . PHP_EOL;
-    }
-}
+<br />
 
-class Router extends ContainerInjector implements RouterInterface
-{
-    // Optional, executes after __construct() -- which does not have access to
-    //  $this->container and $this->enum
-    public function __invoke()
-    {
-        $db = $this->container->get(DatabaseInterface::class);
-        $db->connect();
-    }
-}
+## Signature:
+
+The following are exactly the same:
+
+```php
+$container->add(Dependency::class);
+```
+```php
+$container->add($id = Dependency::class, $resource = Dependency::class, $arguments = []);
+```
+```php
+$container->add($id = Dependency::class, $arguments = []);
 ```
 
 <br />
